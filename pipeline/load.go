@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"path/filepath"
+
 	"github.com/rs/zerolog/log"
 )
 
@@ -11,8 +13,9 @@ func (pd *PipeData) LoadGlob(glob string) *PipeData {
 	}
 
 	// Parse templates
-	logger := log.With().Str("step", "LoadGlob").Str("glob", glob).Logger()
-	tmpl, err := pd.Template.ParseGlob(glob)
+	templateDirGlob := filepath.Join(pd.TemplatesDir, glob)
+	logger := log.With().Str("step", "LoadGlob").Str("template_dir_glob", templateDirGlob).Str("glob", glob).Logger()
+	tmpl, err := pd.Template.ParseGlob(templateDirGlob)
 	if err != nil {
 		logger.Debug().Err(err).Msg("Failed to parse HTML templates")
 		return pd.AddError(err)

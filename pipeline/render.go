@@ -18,7 +18,7 @@ func (pd *PipeData) render(logger zerolog.Logger, templateName, targetPath strin
 
 	// Ensure target folder exists
 	targetFolder, _ := filepath.Split(targetPath)
-	if err := os.MkdirAll(targetFolder, 0755); err != nil {
+	if err := os.MkdirAll(targetFolder, 0o755); err != nil {
 		logger.Error().Err(err).Msg("Failed to create target directory")
 		return pd.AddError(ErrCreateTargetDirectoryFailed)
 	}
@@ -46,8 +46,13 @@ func (pd *PipeData) render(logger zerolog.Logger, templateName, targetPath strin
 }
 
 func (pd *PipeData) RenderSingle(templateName, targetPath string) *PipeData {
-	logger := log.With().Str("template_name", templateName).Str("target_path", targetPath).Str("step", "RenderSingle").Logger()
-	return pd.render(logger, templateName, targetPath, map[string]any{"Data": pd.Data})
+	outputPath := filepath.Join(pd.OutputDir, targetPath)
+	logger := log.With().
+		Str("template_name", templateName).
+		Str("target_path", targetPath).
+		Str("output_path", outputPath).
+		Str("step", "RenderSingle").Logger()
+	return pd.render(logger, templateName, outputPath, map[string]any{"Data": pd.Data})
 }
 
 // LoadRenderSingle clones the PipeData, loads specified template and executes it.
@@ -66,7 +71,7 @@ func (pd *PipeData) LoadRenderSingle(templatePath, targetPath string) *PipeData 
 
 // RenderRepeated renders multiple pages.
 // "repeatedDataKey" should point to a value of type map[string]any.
-// "targetPathTemplate" should contain
+// "targetPathTemplate" should contain "{{KEY}}" which is replaced by the key of provided map.
 func (pd *PipeData) RenderRepeated(templateName, repeatedDataKey, targetPathTemplate string) *PipeData {
 	// Check if PipeData is set
 	if pd == nil {
@@ -74,10 +79,12 @@ func (pd *PipeData) RenderRepeated(templateName, repeatedDataKey, targetPathTemp
 	}
 
 	// Setup logger
+	outputPath := filepath.Join(pd.OutputDir, targetPathTemplate)
 	logger := log.With().
 		Str("template_name", templateName).
 		Str("repeated_data_key", repeatedDataKey).
 		Str("target_path_template", targetPathTemplate).
+		Str("output_path_template", outputPath).
 		Str("step", "RenderRepeated").
 		Logger()
 
@@ -98,14 +105,14 @@ func (pd *PipeData) RenderRepeated(templateName, repeatedDataKey, targetPathTemp
 	}
 
 	// Check if targetPathTemplate contains placeholder
-	if !strings.Contains(targetPathTemplate, "{{KEY}}") {
+	if !strings.Contains(outputPath, "{{KEY}}") {
 		logger.Error().Msg("{{KEY}} placeholder missing in target path template")
 		return pd.AddError(ErrPlaceholderMissingInTargetPathTemplate)
 	}
 
 	// Render pages
 	for k, v := range repeatedData {
-		targetPath := strings.ReplaceAll(targetPathTemplate, "{{KEY}}", k)
+		targetPath := strings.ReplaceAll(outputPath, "{{KEY}}", k)
 		logger := logger.With().Str("target_path", targetPath).Logger()
 		pd.render(logger, templateName, targetPath, map[string]any{
 			"Data":          pd.Data,

@@ -5,25 +5,29 @@ import (
 )
 
 type PipeData struct {
-	Extension string
-	Template  *template.Template
-	Data      map[string]any
-	Errors    []error
+	TemplatesDir string
+	OutputDir    string
+	Extension    string
+	Template     *template.Template
+	Data         map[string]any
+	Errors       []error
 }
 
 // New creates a new PipeData object with initial values.
 // Functions are taken as an argument as these should be populated before you parse any template.
 // See https://pkg.go.dev/text/template#Template.Funcs for more info.
-func NewHTML(functions template.FuncMap) *PipeData {
+func NewHTML(templatesDir string, outputDir string, functions template.FuncMap) *PipeData {
 	tmpl := template.New("empty")
 	if len(functions) > 0 {
 		tmpl.Funcs(functions)
 	}
 	return &PipeData{
-		Extension: ".html",
-		Template:  tmpl,
-		Data:      map[string]any{},
-		Errors:    nil,
+		TemplatesDir: templatesDir,
+		OutputDir:    outputDir,
+		Extension:    ".html",
+		Template:     tmpl,
+		Data:         map[string]any{},
+		Errors:       nil,
 	}
 }
 

@@ -28,10 +28,12 @@ func (pd *PipeData) Clone() *PipeData {
 
 	// Clone PipeData
 	return &PipeData{
-		Extension: pd.Extension,
-		Template:  template,
-		Data:      pd.Data,
-		Errors:    pd.Errors,
+		TemplatesDir: pd.TemplatesDir,
+		OutputDir:    pd.OutputDir,
+		Extension:    pd.Extension,
+		Template:     template,
+		Data:         pd.Data,
+		Errors:       pd.Errors,
 	}
 }
 
@@ -45,4 +47,12 @@ func (pd *PipeData) MustWithClones(pipelines []func(pd *PipeData) *PipeData) *Pi
 		p(pd.Clone()).Must()
 	}
 	return pd
+}
+
+func ToMapStringAny[T any](input map[string]T) map[string]any {
+	output := make(map[string]any, len(input))
+	for k, v := range input {
+		output[k] = v
+	}
+	return output
 }
