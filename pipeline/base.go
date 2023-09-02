@@ -8,7 +8,6 @@ type PipeData struct {
 	TemplatesDir string
 	DataDir      string
 	OutputDir    string
-	Extension    string
 	Template     *template.Template
 	Data         map[string]any
 	Errors       []error
@@ -26,7 +25,6 @@ func NewHTML(functions template.FuncMap) *PipeData {
 		TemplatesDir: "",
 		DataDir:      "",
 		OutputDir:    "",
-		Extension:    ".html",
 		Template:     tmpl,
 		Data:         map[string]any{},
 		Errors:       nil,

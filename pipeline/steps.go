@@ -50,12 +50,3 @@ func (pd *PipeData) SetData(key string, value any) *PipeData {
 	log.Debug().Str("key", key).Str("step", "SetData").Msg("Data successfully set")
 	return pd
 }
-
-func (pd *PipeData) SetExtension(extension string) *PipeData {
-	if pd == nil {
-		return nil
-	}
-	pd.Extension = extension
-	log.Debug().Str("extension", extension).Str("step", "SetExtension").Msg("Extension successfully set")
-	return pd
-}

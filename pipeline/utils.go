@@ -30,7 +30,6 @@ func (pd *PipeData) Clone() *PipeData {
 	return &PipeData{
 		TemplatesDir: pd.TemplatesDir,
 		OutputDir:    pd.OutputDir,
-		Extension:    pd.Extension,
 		Template:     template,
 		Data:         pd.Data,
 		Errors:       pd.Errors,
