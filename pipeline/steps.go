@@ -50,3 +50,17 @@ func (pd *PipeData) SetData(key string, value any) *PipeData {
 	log.Debug().Str("key", key).Str("step", "SetData").Msg("Data successfully set")
 	return pd
 }
+
+func (pd *PipeData) TransformData(transform func(map[string]any) (map[string]any, error)) *PipeData {
+	if pd == nil {
+		return nil
+	}
+	var err error
+	if pd.Data, err = transform(pd.Data); err != nil {
+		log.Error().Err(err).Msg("Failed to transform data")
+		pd.AddError(&TranformDataError{err: err})
+		return pd
+	}
+	log.Debug().Msg("Data successfully transformed")
+	return pd
+}

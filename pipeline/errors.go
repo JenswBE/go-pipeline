@@ -75,3 +75,21 @@ func (e *ExecuteTemplateError) Unwrap() error {
 	}
 	return e.err
 }
+
+type TranformDataError struct {
+	err error
+}
+
+func (e *TranformDataError) Error() string {
+	if e == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("Failed to transform data: %v", e.err)
+}
+
+func (e *TranformDataError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.err
+}
