@@ -51,19 +51,16 @@ func (pd *PipeData) SetData(key string, value any) *PipeData {
 	return pd
 }
 
-func (pd *PipeData) TransformData(panicOnError bool, transform func(map[string]any) (map[string]any, error)) *PipeData {
+// TransformData takes a function which receives pd.Data and should return the modified pd.Data.
+// TransformData will panic if the given function returns an error to prevent an incorrectly generated website.
+func (pd *PipeData) MustTransformData(transform func(map[string]any) (map[string]any, error)) *PipeData {
 	if pd == nil {
 		return nil
 	}
 	var err error
 	if pd.Data, err = transform(pd.Data); err != nil {
-		log.Error().Err(err).Msg("Failed to transform data")
-		transformErr := &TranformDataError{err: err}
-		if panicOnError {
-			panic(transformErr)
-		}
-		pd.AddError(transformErr)
-		return pd
+		log.Panic().Err(err).Msg("Failed to transform data")
+		return nil
 	}
 	log.Debug().Msg("Data successfully transformed")
 	return pd
