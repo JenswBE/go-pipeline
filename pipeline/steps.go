@@ -51,14 +51,18 @@ func (pd *PipeData) SetData(key string, value any) *PipeData {
 	return pd
 }
 
-func (pd *PipeData) TransformData(transform func(map[string]any) (map[string]any, error)) *PipeData {
+func (pd *PipeData) TransformData(panicOnError bool, transform func(map[string]any) (map[string]any, error)) *PipeData {
 	if pd == nil {
 		return nil
 	}
 	var err error
 	if pd.Data, err = transform(pd.Data); err != nil {
 		log.Error().Err(err).Msg("Failed to transform data")
-		pd.AddError(&TranformDataError{err: err})
+		transformErr := &TranformDataError{err: err}
+		if panicOnError {
+			panic(transformErr)
+		}
+		pd.AddError(transformErr)
 		return pd
 	}
 	log.Debug().Msg("Data successfully transformed")
