@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// SetDataYAML loads a YAML file from given path and adds it to pd.Data on given key.
 func (pd *PipeData) SetDataYAML(key, path string) *PipeData {
 	// Check if nil
 	if pd == nil {
@@ -42,6 +43,7 @@ func (pd *PipeData) SetDataYAML(key, path string) *PipeData {
 	return pd
 }
 
+// SetData set provided value to provided data key.
 func (pd *PipeData) SetData(key string, value any) *PipeData {
 	if pd == nil {
 		return nil

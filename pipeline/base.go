@@ -31,16 +31,19 @@ func NewHTML(functions template.FuncMap) *PipeData {
 	}
 }
 
+// WithTemplatesDir sets the default templates directory.
 func (pd *PipeData) WithTemplatesDir(templatesDir string) *PipeData {
 	pd.TemplatesDir = templatesDir
 	return pd
 }
 
+// WithDataDir sets the default data directory.
 func (pd *PipeData) WithDataDir(dataDir string) *PipeData {
 	pd.DataDir = dataDir
 	return pd
 }
 
+// WithOutputDir sets the output data directory.
 func (pd *PipeData) WithOutputDir(outputDir string) *PipeData {
 	pd.OutputDir = outputDir
 	return pd
