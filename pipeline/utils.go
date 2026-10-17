@@ -1,17 +1,20 @@
 package pipeline
 
 import (
-	"github.com/rs/zerolog/log"
+	"log/slog"
+	"os"
 )
 
 // Must calls log.Fatal in case errors are provided.
 func (pd *PipeData) Must() {
 	if pd == nil {
-		log.Fatal().Msg("Must called, but PipeData is nil")
+		slog.Error("Must called, but PipeData is nil")
+		os.Exit(1)
 		return // For correct linter detection of log.Fatal
 	}
 	if len(pd.Errors) > 0 {
-		log.Fatal().Errs("errors", pd.Errors).Msg("Must called, but received errors")
+		pd.logger.Error("Must called, but received errors", "errors", pd.Errors)
+		os.Exit(1)
 	}
 }
 
@@ -22,7 +25,7 @@ func (pd *PipeData) Clone() *PipeData {
 	// Clone template
 	template, err := pd.Template.Clone()
 	if err != nil {
-		log.Error().Err(err).Msg("Trying to clone an executed template")
+		pd.logger.Error("Trying to clone an executed template", "error", err)
 		pd.AddError(err)
 	}
 
@@ -33,6 +36,7 @@ func (pd *PipeData) Clone() *PipeData {
 		Template:     template,
 		Data:         pd.Data,
 		Errors:       pd.Errors,
+		logger:       pd.logger,
 	}
 }
 

@@ -1,16 +1,14 @@
 package pipeline
 
 import (
+	"log/slog"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
-func (pd *PipeData) render(logger zerolog.Logger, templateName, targetPath string, data map[string]any) *PipeData {
+func (pd *PipeData) render(logger *slog.Logger, templateName, targetPath string, data map[string]any) *PipeData {
 	// Check if PipeData is set
 	if pd == nil {
 		return nil
@@ -19,39 +17,35 @@ func (pd *PipeData) render(logger zerolog.Logger, templateName, targetPath strin
 	// Ensure target folder exists
 	targetFolder, _ := filepath.Split(targetPath)
 	if err := os.MkdirAll(targetFolder, 0o755); err != nil {
-		logger.Error().Err(err).Msg("Failed to create target directory")
+		logger.Error("Failed to create target directory", "error", err)
 		return pd.AddError(ErrCreateTargetDirectoryFailed)
 	}
 
 	// Open target file
 	f, err := os.Create(targetPath)
 	if err != nil {
-		logger.Error().Err(err).Msg("Failed to create/truncate target file")
+		logger.Error("Failed to create/truncate target file", "error", err)
 		return pd.AddError(&FileError{action: FileActionCreateTruncate, filePath: targetPath, err: err})
 	}
 	defer func() {
 		if fileError := f.Close(); fileError != nil {
-			logger.Error().Err(err).Msg("Failed to close target file")
+			logger.Error("Failed to close target file", "error", fileError)
 			pd.AddError(&FileError{action: FileActionClose, filePath: targetPath, err: fileError})
 		}
 	}()
 
 	// Execute template
 	if err = pd.Template.ExecuteTemplate(f, templateName, data); err != nil {
-		logger.Error().Err(err).Interface("data", pd.Data).Msg("Failed to render template")
+		logger.Error("Failed to render template", "error", err, "data", pd.Data)
 		return pd.AddError(&ExecuteTemplateError{templateName: templateName, err: err})
 	}
-	logger.Debug().Msg("Single template successfully rendered")
+	logger.Debug("Single template successfully rendered")
 	return pd
 }
 
 func (pd *PipeData) RenderSingle(templateName, targetPath string) *PipeData {
 	outputPath := filepath.Join(pd.OutputDir, targetPath)
-	logger := log.With().
-		Str("template_name", templateName).
-		Str("target_path", targetPath).
-		Str("output_path", outputPath).
-		Str("step", "RenderSingle").Logger()
+	logger := pd.logger.With("template_name", templateName, "target_path", targetPath, "output_path", outputPath, "step", "RenderSingle")
 	return pd.render(logger, templateName, outputPath, map[string]any{"Data": pd.Data})
 }
 
@@ -80,40 +74,34 @@ func (pd *PipeData) RenderRepeated(templateName, repeatedDataKey, targetPathTemp
 
 	// Setup logger
 	outputPath := filepath.Join(pd.OutputDir, targetPathTemplate)
-	logger := log.With().
-		Str("template_name", templateName).
-		Str("repeated_data_key", repeatedDataKey).
-		Str("target_path_template", targetPathTemplate).
-		Str("output_path_template", outputPath).
-		Str("step", "RenderRepeated").
-		Logger()
+	logger := pd.logger.With("template_name", templateName, "repeated_data_key", repeatedDataKey, "target_path_template", targetPathTemplate, "output_path_template", outputPath, "step", "RenderRepeated")
 
 	// Check if repeatedDataKey points to map[string]any
 	if pd.Data == nil {
-		logger.Error().Msg("RenderRepeated requires Data to be set")
+		logger.Error("RenderRepeated requires Data to be set")
 		return pd.AddError(ErrRepeatedDataNotFound)
 	}
 	rawRepeatedData, ok := pd.Data[repeatedDataKey]
 	if !ok {
-		logger.Error().Interface("data", pd.Data).Msg("Repeated data key not found in data")
+		logger.Error("Repeated data key not found in data", "data", pd.Data)
 		return pd.AddError(ErrRepeatedDataNotFound)
 	}
 	repeatedData, ok := rawRepeatedData.(map[string]any)
 	if !ok {
-		logger.Error().Interface("data", pd.Data).Msgf("Repeated data key points to type %T, but type map[string]any is required.", rawRepeatedData)
+		logger.Error("Repeated data key points to type %T, but type map[string]any is required.", "type", rawRepeatedData)
 		return pd.AddError(ErrRepeatedDataNotFound)
 	}
 
 	// Check if targetPathTemplate contains placeholder
 	if !strings.Contains(outputPath, "{{KEY}}") {
-		logger.Error().Msg("{{KEY}} placeholder missing in target path template")
+		logger.Error("{{KEY}} placeholder missing in target path template")
 		return pd.AddError(ErrPlaceholderMissingInTargetPathTemplate)
 	}
 
 	// Render pages
 	for k, v := range repeatedData {
 		targetPath := strings.ReplaceAll(outputPath, "{{KEY}}", k)
-		logger := logger.With().Str("target_path", targetPath).Logger()
+		logger = logger.With("target_path", targetPath)
 		pd.render(logger, templateName, targetPath, map[string]any{
 			"Data":          pd.Data,
 			"RepeatedKey":   k,
