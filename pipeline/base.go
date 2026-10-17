@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	template "html/template"
+	"log/slog"
 )
 
 type PipeData struct {
@@ -11,6 +12,7 @@ type PipeData struct {
 	Template     *template.Template
 	Data         map[string]any
 	Errors       []error
+	logger       *slog.Logger
 }
 
 // New creates a new PipeData object with initial values.
@@ -28,12 +30,19 @@ func NewHTML(functions template.FuncMap) *PipeData {
 		Template:     tmpl,
 		Data:         map[string]any{},
 		Errors:       nil,
+		logger:       slog.Default(),
 	}
 }
 
 // WithTemplatesDir sets the default templates directory.
 func (pd *PipeData) WithTemplatesDir(templatesDir string) *PipeData {
 	pd.TemplatesDir = templatesDir
+	return pd
+}
+
+// WithLogger sets the default logger. If not set, the global logger will be used.
+func (pd *PipeData) WithLogger(logger *slog.Logger) *PipeData {
+	pd.logger = logger
 	return pd
 }
 

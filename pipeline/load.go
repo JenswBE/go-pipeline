@@ -2,8 +2,6 @@ package pipeline
 
 import (
 	"path/filepath"
-
-	"github.com/rs/zerolog/log"
 )
 
 func (pd *PipeData) LoadGlob(glob string) *PipeData {
@@ -14,14 +12,14 @@ func (pd *PipeData) LoadGlob(glob string) *PipeData {
 
 	// Parse templates
 	templateDirGlob := filepath.Join(pd.TemplatesDir, glob)
-	logger := log.With().Str("step", "LoadGlob").Str("template_dir_glob", templateDirGlob).Str("glob", glob).Logger()
+	logger := pd.logger.With("step", "LoadGlob", "template_dir_glob", templateDirGlob, "glob", glob)
 	tmpl, err := pd.Template.ParseGlob(templateDirGlob)
 	if err != nil {
-		logger.Debug().Err(err).Msg("Failed to parse HTML templates")
+		logger.Debug("Failed to parse HTML templates", "error", err)
 		return pd.AddError(err)
 	}
 
 	// Return result
-	logger.Debug().Str("defined_templates", tmpl.DefinedTemplates()).Msg("Templates loaded successfully")
+	logger.Debug("Templates loaded successfully", "defined_templates", tmpl.DefinedTemplates())
 	return pd
 }
